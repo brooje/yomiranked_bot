@@ -3,10 +3,22 @@ import discord
 import os
 import dotenv
 import discord.user
-from flask import Flask, request
+import sqlite3
+import asyncio
+
+from quart import Quart, request
 
 
 dotenv.load_dotenv()
+
+db_conn = sqlite3.connect("bot.db")
+db_cursor = db_conn.cursor()
+
+db_cursor.execute('''CREATE TABLE IF NOT EXISTS guild_data (guild TEXT NOT NULL PRIMARY KEY,
+                  report_channel TEXT)''')
+db_conn.commit()
+db_cursor.close()
+db_conn.close()
 
 bot = discord.Bot()
 
@@ -48,7 +60,6 @@ async def claimsteam(ctx : discord.ApplicationContext, steamid64: str):
     if hash_response.status_code == 400:
         if (hash_response.content == "too long"):
             await ctx.send_response("This SteamID is too long; are you sure you got it right?", ephemeral = True)
-        print(hash_response.content)
         await ctx.send_response("Your SteamID doesn't seem to have played Ranked yet.", ephemeral = True)
         return
     elif hash_response.status_code == 200:
@@ -58,7 +69,6 @@ async def claimsteam(ctx : discord.ApplicationContext, steamid64: str):
     # Registers the Discord account that used the command with their Steam hash.
     register_response = requests.post(ranked_addr + "/registerdiscord", json={"steamHash": hash, "discordId": ctx.author.id})
     if register_response.status_code == 400:
-        print(register_response.content)
         await ctx.send_response("Your SteamID doesn't seem to have played Ranked yet.", ephemeral = True)
         return
     elif register_response.status_code == 200:
@@ -105,10 +115,29 @@ async def updaterole(ctx : discord.ApplicationContext):
     # Set the users roles to their current roles, minus all rank roles except their current rank role.
     await ctx.author.edit(roles=roles)
     
-    
+# Allows users with Manage Channels to change the channel match reports go to.
+@bot.slash_command(
+        description = "Manage Channels Only: Change the channel match reports go to."
+)
+@discord.commands.permissions.default_permissions(manage_channels=True)
+async def setreportchannel(ctx : discord.ApplicationContext, channelid : str):
+    db_conn = sqlite3.connect("bot.db")
+    db_cursor = db_conn.cursor()
+    db_cursor.execute("INSERT INTO guild_data (guild, report_channel) VALUES (?, ?)", (str(ctx.author.guild.id), channelid))
+    db_conn.commit()
+    db_cursor.close()
+    db_conn.close()
+    channels = [channel for channel in ctx.author.guild.text_channels if channel.id == int(channelid)]
+    if (len(channels) == 0):
+        await ctx.send_response("A channel with this ID doesn't exist.", ephemeral = True)
+    await ctx.send_response("Changed reporting channel to {}".format(channels[0]))
+
+@setreportchannel.error
+async def setreportchannel_error(ctx : discord.ApplicationContext, channelid : str):
+    await ctx.send_response("You don't have the Manage Channels permission.", ephemeral = True)
 
 # Quietly updates a Discord user's role in a guild given their Steam ID, using the Discord ID attached to the Steam ID in the database.
-async def sync_ranks(steamID, guild : discord.Guild):
+async def sync_ranks(steamID, guild : discord.Guild, elo : int):
     # Get the SteamID from the DiscordID.
     steam2disc_response = requests.get(ranked_addr + "/steam2disc", {"steamId": str(steamID)})
     if steam2disc_response.status_code == 400:
@@ -117,17 +146,9 @@ async def sync_ranks(steamID, guild : discord.Guild):
         discordID = steam2disc_response.json()
     member = guild.get_member(discordID)
 
-    elo_response = requests.get(ranked_addr + "/getrank", {"player": str(steamID)})
-    if elo_response.status_code == 400:
-        print("Error fetching user's rank.")
-        return
-    elif elo_response.status_code == 200:
-        elo = elo_response.json()
-
-
 
     if (member != None):
-        roles = member.roles
+        roles = member.roles.copy()
 
         for rank in ranks:
             # Remove all previous rank roles from the user.
@@ -144,25 +165,48 @@ async def sync_ranks(steamID, guild : discord.Guild):
 
 
 
-bot.run(str(os.getenv("TOKEN")))
 
-
-app = Flask(__name__)
+app = Quart(__name__)
 
 @app.route("/")
-def index():
+async def index():
     return "<p>Hello, Yomi Ranked!</p>"
 
-@app.route("/updateranks", methods=['POST'])
-def report_match():
-    data = request.get_json(force=True)
+@app.route("/reportmatch", methods=['POST'])
+async def report_match():
+    data = await request.get_json(force=True)
+    winnerName = data["winnerName"]
+    loserName = data["loserName"]
+    winnerEloBefore = data["winnerEloBefore"]
+    loserEloBefore = data["loserEloBefore"]
+    winnerEloCurrent = data["winnerEloCurrent"]
+    loserEloCurrent = data["loserEloCurrent"]
     winnerSteamId = data["winnerSteamId"]
     loserSteamId = data["loserSteamId"]
-    if (type(winnerSteamId) != str or type(loserSteamId) != str):
-        return
-    idsToUpdate = [winnerSteamId, loserSteamId]
     for guild in bot.guilds:
-        for id in idsToUpdate:
-            sync_ranks(id, guild)
+        db_conn = sqlite3.connect("bot.db")
+        db_cursor = db_conn.cursor()
+        db_cursor.execute("SELECT report_channel FROM guild_data WHERE guild = ?", (str(guild.id),))
+        report_match_channel_query = db_cursor.fetchone()
+        if (report_match_channel_query == None):
+            continue
+        db_cursor.close()
+        db_conn.close()
+        report_match_channel = report_match_channel_query[0]
+        await guild.get_channel(int(report_match_channel)).send(embeds=[
+            discord.Embed(
+                          title="Ranked Match Report - {winner} vs. {loser}".format(winner = winnerName, loser = loserName),
+                          description='''**{winner}** defeated **{loser}**!
+                          {winner} ELO: {winnerEloBefore} → {winnerElo}
+                          {loser} ELO: {loserEloBefore} → {loserElo}'''.format(winner = winnerName, winnerEloBefore = winnerEloBefore, winnerElo = winnerEloCurrent, loser = loserName, loserEloBefore = loserEloBefore, loserElo = loserEloCurrent)
+                          )
+        ])
+        sync_ranks(winnerSteamId, guild, winnerEloCurrent)
+        sync_ranks(loserSteamId, guild, loserEloCurrent)
+    return "<p>Reported match.</p>", 200
 
-app.run(port=8080)
+
+
+bot.loop.create_task(app.run_task(port=8081))
+
+bot.run(os.getenv("TOKEN"))
