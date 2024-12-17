@@ -11,9 +11,11 @@ from quart import Quart, request
 
 dotenv.load_dotenv()
 
+# Opens a connection to the bot database.
 db_conn = sqlite3.connect("bot.db")
 db_cursor = db_conn.cursor()
 
+# Create the guild info table if it doesn't exists (allows us to save the match reporting channel)
 db_cursor.execute('''CREATE TABLE IF NOT EXISTS guild_data (guild TEXT NOT NULL PRIMARY KEY,
                   report_channel TEXT)''')
 db_conn.commit()
