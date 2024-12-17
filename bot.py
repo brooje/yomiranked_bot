@@ -197,8 +197,8 @@ async def report_match():
             discord.Embed(
                           title="Ranked Match Report - {winner} vs. {loser}".format(winner = winnerName, loser = loserName),
                           description='''**{winner}** defeated **{loser}**!
-                          **{winner}** ELO: {winnerEloBefore} → {winnerElo}
-                          **{loser}** ELO: {loserEloBefore} → {loserElo}'''.format(winner = winnerName, winnerEloBefore = winnerEloBefore, winnerElo = winnerEloCurrent, loser = loserName, loserEloBefore = loserEloBefore, loserElo = loserEloCurrent)
+                          **{winner}** ELO: {winnerEloBefore} → {winnerEloCurrent}
+                          **{loser}** ELO: {loserEloBefore} → {loserEloCurrent}'''.format(winner = winnerName, winnerEloBefore = winnerEloBefore, winnerEloCurrent = winnerEloCurrent, loser = loserName, loserEloBefore = loserEloBefore, loserEloCurrent = loserEloCurrent)
                           )
         ])
         sync_ranks(winnerSteamId, guild, winnerEloCurrent)
