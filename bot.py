@@ -23,7 +23,7 @@ db_conn.commit()
 db_cursor.close()
 db_conn.close()
 
-bot = discord.Bot()
+bot = discord.Bot(intents=discord.Intents.members)
 
 ranked_addr = "http://localhost:2221"
 
