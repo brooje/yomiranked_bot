@@ -210,7 +210,7 @@ async def report_match():
     for guild in bot.guilds:
         db_conn = sqlite3.connect("bot.db")
         db_cursor = db_conn.cursor()
-        db_cursor.execute("SELECT report_channel FROM guild_data WHERE guild = ?", (str(guild.id)))
+        db_cursor.execute("SELECT report_channel FROM guild_data WHERE guild = ?", (str(guild.id),))
         report_match_channel_response = db_cursor.fetchone()
         if (report_match_channel_response == None):
             print("No report channel for guild.")
