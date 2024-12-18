@@ -92,6 +92,8 @@ async def updaterole(ctx : discord.ApplicationContext):
         return
     elif disc2steam_response.status_code == 200:
         steamID = disc2steam_response.json()
+    else:
+        await ctx.send_response("Unknown error.")
     # Get the player's elo from their SteamID.
     elo_response = requests.get(ranked_addr + "/getrank", {"player": str(steamID)})
     if elo_response.status_code == 400:
@@ -100,7 +102,8 @@ async def updaterole(ctx : discord.ApplicationContext):
     elif elo_response.status_code == 200:
         elo = elo_response.json()
         roles = ctx.author.roles
-
+    else:
+        await ctx.send_response("Unknown error.")
     
     for rank in ranks:
         # Remove all previous rank roles from the user.
@@ -164,8 +167,6 @@ async def sync_ranks(steamID, guild : discord.Guild, elo : int):
 
         # Set the users roles to their current roles, minus all rank roles except their current rank role.
         await member.edit(roles=roles)
-
-
 
 
 app = Quart(__name__)
