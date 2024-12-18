@@ -249,8 +249,8 @@ async def report_match():
                           **{loser}** ({loserMention}) ELO: {loserEloBefore} → {loserEloCurrent}'''.format(winner = winnerName, winnerEloBefore = winnerEloBefore, winnerEloCurrent = winnerEloCurrent, loser = loserName, loserEloBefore = loserEloBefore, loserEloCurrent = loserEloCurrent, winnerMention = winnerMention, loserMention = loserMention)
                           )
         ], silent=True)
-        sync_ranks(winnerSteamId, guild, winnerEloCurrent)
-        sync_ranks(loserSteamId, guild, loserEloCurrent)
+        await sync_ranks(winnerSteamId, guild, winnerEloCurrent)
+        await sync_ranks(loserSteamId, guild, loserEloCurrent)
     return "<p>Reported match.</p>", 200
 
 
