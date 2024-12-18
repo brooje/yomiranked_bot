@@ -188,16 +188,14 @@ async def report_match():
     winnerSteamId = data["winnerSteamId"]
     loserSteamId = data["loserSteamId"]
 
+    winnerDiscordID = None
     steam2disc_response = requests.get(ranked_addr + "/steam2disc", {"steamId": str(winnerSteamId)})
-    if steam2disc_response.status_code == 400:
-        return
-    elif steam2disc_response.status_code == 200:
+    if steam2disc_response.status_code == 200:
         winnerDiscordID = steam2disc_response.json()
 
+    loserDiscordID = None
     steam2disc_response = requests.get(ranked_addr + "/steam2disc", {"steamId": str(loserSteamId)})
-    if steam2disc_response.status_code == 400:
-        return
-    elif steam2disc_response.status_code == 200:
+    if steam2disc_response.status_code == 200:
         loserDiscordID = steam2disc_response.json()
 
     for guild in bot.guilds:
@@ -206,6 +204,8 @@ async def report_match():
         db_cursor.execute("SELECT report_channel FROM guild_data WHERE guild = ?", (str(guild.id),))
         report_match_channel_query = db_cursor.fetchone()
         if (report_match_channel_query == None):
+            db_cursor.close()
+            db_conn.close()
             continue
         db_cursor.close()
         db_conn.close()
@@ -213,13 +213,13 @@ async def report_match():
             
       
         winnerMention = guild.get_member(int(winnerDiscordID))
-        if (winnerMention is None):
+        if (winnerMention is None or winnerDiscordID is None):
             winnerMention = winnerMention.mention
         else:
             winnerMention = "not in guild"
 
         loserMention = guild.get_member(int(loserDiscordID))
-        if (loserMention is None):
+        if (loserMention is None or loserDiscordID is None):
             loserMention = loserMention.mention
         else:
             loserMention = "not in guild"
