@@ -186,6 +186,19 @@ async def report_match():
     loserEloCurrent = data["loserEloCurrent"]
     winnerSteamId = data["winnerSteamId"]
     loserSteamId = data["loserSteamId"]
+
+    steam2disc_response = requests.get(ranked_addr + "/steam2disc", {"steamId": str(winnerSteamId)})
+    if steam2disc_response.status_code == 400:
+        return
+    elif steam2disc_response.status_code == 200:
+        winnerDiscordID = steam2disc_response.json()
+
+    steam2disc_response = requests.get(ranked_addr + "/steam2disc", {"steamId": str(loserSteamId)})
+    if steam2disc_response.status_code == 400:
+        return
+    elif steam2disc_response.status_code == 200:
+        loserDiscordID = steam2disc_response.json()
+
     for guild in bot.guilds:
         db_conn = sqlite3.connect("bot.db")
         db_cursor = db_conn.cursor()
@@ -196,14 +209,21 @@ async def report_match():
         db_cursor.close()
         db_conn.close()
         report_match_channel = report_match_channel_query[0]
+            
+      
+        winnerMention = guild.get_member(winnerDiscordID).mention
+        loserMention = guild.get_member(loserDiscordID).mention
+
+
+
         await guild.get_channel(int(report_match_channel)).send(embeds=[
             discord.Embed(
                           title="Ranked Match Report - {winner} vs. {loser}".format(winner = winnerName, loser = loserName),
                           description='''**{winner}** defeated **{loser}**!
-                          **{winner}** ELO: {winnerEloBefore} → {winnerEloCurrent}
-                          **{loser}** ELO: {loserEloBefore} → {loserEloCurrent}'''.format(winner = winnerName, winnerEloBefore = winnerEloBefore, winnerEloCurrent = winnerEloCurrent, loser = loserName, loserEloBefore = loserEloBefore, loserEloCurrent = loserEloCurrent)
+                          **{winner}** ({winnerMention}) ELO: {winnerEloBefore} → {winnerEloCurrent}
+                          **{loser}** ({loserMention}) ELO: {loserEloBefore} → {loserEloCurrent}'''.format(winner = winnerName, winnerEloBefore = winnerEloBefore, winnerEloCurrent = winnerEloCurrent, loser = loserName, loserEloBefore = loserEloBefore, loserEloCurrent = loserEloCurrent, winnerMention = winnerMention, loserMention = loserMention)
                           )
-        ])
+        ], silent=True)
         sync_ranks(winnerSteamId, guild, winnerEloCurrent)
         sync_ranks(loserSteamId, guild, loserEloCurrent)
     return "<p>Reported match.</p>", 200
