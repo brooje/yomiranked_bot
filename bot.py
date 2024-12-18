@@ -58,7 +58,7 @@ async def on_ready():
 @bot.slash_command(
         description="Connect your steam account to your discord account."
 )
-async def claimsteam(ctx : discord.ApplicationContext, steamid64: str):
+async def claimsteam(ctx : discord.ApplicationContext, rankedSecret: str):
     hash = ""
     # Get the SteamId hash from the DiscordId; this seems vestigial in its current state, and at this point I'm willing to remove the whole hashing process if possible.
     hash_response = requests.get(ranked_addr + "/gethash", {"id": str(steamid64)})
