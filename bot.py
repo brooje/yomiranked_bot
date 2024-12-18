@@ -5,6 +5,7 @@ import dotenv
 import discord.user
 import sqlite3
 import asyncio
+from signal import SIGINT, SIGTERM
 
 from quart import Quart, request
 
@@ -238,6 +239,9 @@ async def report_match():
 
 
 
-bot.loop.create_task(app.run_task(port=8081))
+quart_task = bot.loop.create_task(app.run_task(port=8081))
+
+bot.loop.add_signal_handler(SIGINT, quart_task.cancel)
+bot.loop.add_signal_handler(SIGTERM, quart_task.cancel)
 
 bot.run(os.getenv("TOKEN"))
