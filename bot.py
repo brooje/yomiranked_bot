@@ -211,9 +211,17 @@ async def report_match():
         report_match_channel = report_match_channel_query[0]
             
       
-        winnerMention = guild.get_member(winnerDiscordID).mention
-        loserMention = guild.get_member(loserDiscordID).mention
+        winnerMention = guild.get_member(int(winnerDiscordID))
+        if (winnerMention is None):
+            winnerMention = winnerMention.mention
+        else:
+            winnerMention = "not in guild"
 
+        loserMention = guild.get_member(int(loserDiscordID))
+        if (loserMention is None):
+            loserMention = loserMention.mention
+        else:
+            loserMention = "not in guild"
 
 
         await guild.get_channel(int(report_match_channel)).send(embeds=[
