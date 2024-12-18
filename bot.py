@@ -23,7 +23,7 @@ db_conn.commit()
 db_cursor.close()
 db_conn.close()
 
-bot = discord.Bot(intents=discord.Intents.members)
+bot = discord.Bot(intents=discord.Intents(members=True))
 
 ranked_addr = "http://localhost:2221"
 
@@ -256,8 +256,5 @@ async def report_match():
 
 
 quart_task = bot.loop.create_task(app.run_task(port=8081))
-
-bot.loop.add_signal_handler(SIGINT, quart_task.cancel)
-bot.loop.add_signal_handler(SIGTERM, quart_task.cancel)
 
 bot.run(os.getenv("TOKEN"))
