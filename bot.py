@@ -224,6 +224,8 @@ async def report_match():
         winnerMention = guild.get_member(int(winnerDiscordId))
         if (winnerMention is None or winnerDiscordId is None):
             winnerMention = winnerMention.mention
+        elif winnerDiscordId == -1:
+            winnerMention = "discord not connected"
         else:
             winnerMention = "not in guild"
     
@@ -231,6 +233,8 @@ async def report_match():
         loserMention = guild.get_member(int(loserDiscordId))
         if (loserMention is None or loserDiscordId is None):
             loserMention = loserMention.mention
+        elif loserDiscordId == -1:
+            loserMention = "discord not connected"
         else:
             loserMention = "not in guild"
 
