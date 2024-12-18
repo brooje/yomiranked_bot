@@ -22,8 +22,10 @@ db_cursor.execute('''CREATE TABLE IF NOT EXISTS guild_data (guild TEXT NOT NULL 
 db_conn.commit()
 db_cursor.close()
 db_conn.close()
+intents = discord.Intents.default()
+intents.members = True
 
-bot = discord.Bot(intents=discord.Intents(members=True))
+bot = discord.Bot(intents=intents)
 
 ranked_addr = "http://localhost:2221"
 
