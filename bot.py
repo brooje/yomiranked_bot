@@ -24,7 +24,7 @@ db_conn.close()
 
 bot = discord.Bot()
 
-ranked_addr = "http://150.136.44.240:2221"
+ranked_addr = "http://localhost:2221"
 
 
 # Returns a dictionary representing a rank's information.
