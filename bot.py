@@ -126,16 +126,18 @@ async def updaterole(ctx : discord.ApplicationContext):
         description = "Manage Channels Only: Change the channel match reports go to."
 )
 @discord.commands.permissions.default_permissions(manage_channels=True)
-async def setreportchannel(ctx : discord.ApplicationContext, channelid : str):
+async def setreportchannel(ctx : discord.ApplicationContext):
+
+    channels = [channel for channel in ctx.author.guild.text_channels if channel.id == str(ctx.channel_id())]
+    if (len(channels) == 0):
+        await ctx.send_response("A channel with this ID doesn't exist.", ephemeral = True)
+        return
     db_conn = sqlite3.connect("bot.db")
     db_cursor = db_conn.cursor()
-    db_cursor.execute("INSERT INTO guild_data (guild, report_channel) VALUES (?, ?)", (str(ctx.author.guild.id), channelid))
+    db_cursor.execute("INSERT INTO guild_data (guild, report_channel) VALUES (?, ?)", (str(ctx.author.guild.id), str(ctx.channel_id())))
     db_conn.commit()
     db_cursor.close()
     db_conn.close()
-    channels = [channel for channel in ctx.author.guild.text_channels if channel.id == int(channelid)]
-    if (len(channels) == 0):
-        await ctx.send_response("A channel with this ID doesn't exist.", ephemeral = True)
     await ctx.send_response("Changed reporting channel to {}".format(channels[0]))
 
 @setreportchannel.error
