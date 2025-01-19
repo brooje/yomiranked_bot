@@ -58,10 +58,10 @@ async def on_ready():
 @bot.slash_command(
         description="Connect your steam account to your discord account."
 )
-async def claimsteam(ctx : discord.ApplicationContext, rankedSecret: str):
+async def claimsteam(ctx : discord.ApplicationContext, ranked_secret: str):
     hash = ""
     # Get the SteamId hash from the DiscordId; this seems vestigial in its current state, and at this point I'm willing to remove the whole hashing process if possible.
-    hash_response = requests.get(ranked_addr + "/gethash", {"id": str(steamid64)})
+    hash_response = requests.get(ranked_addr + "/gethash", {"id": str(ranked_secret)})
     if hash_response.status_code == 400:
         if (hash_response.content == "too long"):
             await ctx.send_response("This SteamId is too long; are you sure you got it right?", ephemeral = True)
