@@ -145,7 +145,7 @@ async def make_leaderboard_embed(leaderboard_data : list, guild_id : int, first_
         if (entry["discordId"] == "none provided"):
             mention = "unlinked"
         else:
-            member = (await bot.get_guild(guild_id)).get_member(int(entry["discordId"]))
+            member = bot.get_guild(guild_id).get_member(int(entry["discordId"]))
             if int(entry["discordId"]) == -1 or member is None:
                 mention = "unlinked"
             else:
