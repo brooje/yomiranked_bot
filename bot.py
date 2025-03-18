@@ -149,20 +149,20 @@ def make_leaderboard_embed(leaderboard_data : list, first_index : int = 0, max_p
 class Leaderboard(discord.ui.View): 
     def __init__(self, index = 0):
         super().__init__(timeout=3600, disable_on_timeout=True)
+        self.current_first_index = 0
 
-    current_first_index = 0
 
     @discord.ui.button(label="Previous Page", style=discord.ButtonStyle.primary, emoji="⬅️")
-    async def button_callback(self, button, interaction):
+    async def button_callback_prev(self, button, interaction):
         leaderboard_data = fetch_leaderboard_data()
-        current_first_index = min(max(current_first_index - 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, current_first_index))
+        self.current_first_index = min(max(self.current_first_index - 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
+        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
 
     @discord.ui.button(label="Next Page", style=discord.ButtonStyle.primary, emoji="➡️")
-    async def button_callback(self, button, interaction):
+    async def button_callback_next(self, button, interaction):
         leaderboard_data = fetch_leaderboard_data()
-        current_first_index = min(max(current_first_index + 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, current_first_index))
+        self.current_first_index = min(max(self.current_first_index + 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
+        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
 
 # Shows the leaderboard.
 @bot.slash_command(
