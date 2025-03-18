@@ -132,7 +132,7 @@ def fetch_leaderboard_data():
     elif leaderboard_response.status_code == 200:
         return leaderboard_response.json()
     
-def make_leaderboard_embed(leaderboard_data : list, first_index : int = 0, max_players : int = 10):
+def make_leaderboard_embed(leaderboard_data : list, ctx : discord.ApplicationContext, first_index : int = 0, max_players : int = 10,):
     player_rating_string = ""
     index = first_index
     while (index < first_index + max_players and index < len(leaderboard_data)):
@@ -140,7 +140,19 @@ def make_leaderboard_embed(leaderboard_data : list, first_index : int = 0, max_p
         index += 1
         if (entry["banned"]):
             continue
-        player_rating_string += "**{player}**: {rating}\n".format(player = entry["steamName"], rating = entry["rating"])
+
+        mention = "unlinked"
+        if (entry["discordId"] == "none provided"):
+            mention = "unlinked"
+        else:
+            member = ctx.interaction.guild.get_member(int(entry["discordId"]))
+            if int(entry["discordId"]) == -1:
+                mention = "unlinked"
+            else:
+                mention = member.mention
+
+        player_rating_string += "**{player} ({mention})**: {rating}\n".format(player = entry["steamName"], mention=mention, rating = entry["rating"])
+
     return discord.Embed(
                           title="Ranked Leaderboard - {first}-{last}".format(first = first_index, last = first_index + max_players),
                           description=player_rating_string)
@@ -156,13 +168,13 @@ class Leaderboard(discord.ui.View):
     async def button_callback_prev(self, button, interaction):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index - 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
+        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
 
     @discord.ui.button(label="Next Page", style=discord.ButtonStyle.primary, emoji="➡️")
     async def button_callback_next(self, button, interaction):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index + 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
+        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
 
 # Shows the leaderboard.
 @bot.slash_command(
