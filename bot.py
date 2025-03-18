@@ -145,7 +145,7 @@ async def make_leaderboard_embed(leaderboard_data : list, guild_id : int, first_
         if (entry["discordId"] == "none provided"):
             mention = "unlinked"
         else:
-            member = (await bot.fetch_guild(guild_id)).get_member(int(entry["discordId"]))
+            member = (await bot.get_guild(guild_id)).get_member(int(entry["discordId"]))
             if int(entry["discordId"]) == -1 or member is None:
                 mention = "unlinked"
             else:
@@ -169,12 +169,14 @@ class Leaderboard(discord.ui.View):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index - 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
         await self.message.edit(view=self, embed=await make_leaderboard_embed(leaderboard_data, interaction.guild_id, self.current_first_index))
+        interaction.respond()
 
     @discord.ui.button(label="Next Page", style=discord.ButtonStyle.primary, emoji="➡️")
     async def button_callback_next(self, button, interaction : discord.Interaction):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index + 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
         await self.message.edit(view=self, embed=await make_leaderboard_embed(leaderboard_data, interaction.guild_id, self.current_first_index))
+        interaction.respond()
 
 # Shows the leaderboard.
 @bot.slash_command(
