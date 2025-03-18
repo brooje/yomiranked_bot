@@ -54,6 +54,8 @@ ranks = [
 async def on_ready():
     pass
 
+
+
 # Allows a user to connect their steam account to their discord account, using their decimal SteamId64.
 @bot.slash_command(
         description="Connect your steam account to your discord account using your key from the ranked mod."
@@ -122,7 +124,53 @@ async def updaterole(ctx : discord.ApplicationContext):
 
     # Set the users roles to their current roles, minus all rank roles except their current rank role.
     await ctx.author.edit(roles=roles)
+
+def fetch_leaderboard_data():
+    leaderboard_response = requests.get(ranked_addr + "/leaderboard")
+    if leaderboard_response.status_code == 400:
+        return []
+    elif leaderboard_response.status_code == 200:
+        return leaderboard_response.json()
     
+def make_leaderboard_embed(leaderboard_data : list, first_index : int = 0, max_players = 10):
+    player_rating_string = ""
+    index = first_index
+    while (index < first_index + max_players and index < len(leaderboard_data)):
+        entry = leaderboard_data[index]
+        if (entry["banned"]):
+            continue
+        player_rating_string += "**{player}**: {rating}\n".format(player = entry["steamName"], elo = entry["rating"])
+    return discord.Embed(
+                          title="Ranked Leaderboard - {first}-{last}".format(first = first_index, last = first_index + max_players),
+                          description=player_rating_string)
+
+# Leaderboard UI view.
+class Leaderboard(discord.ui.View): 
+    def __init__(self, index = 0):
+        super().__init__(timeout=3600, disable_on_timeout=True)
+
+    current_first_index = 0
+
+    @discord.ui.button(label="Previous Page", style=discord.ButtonStyle.primary, emoji="⬅️")
+    async def button_callback(self, button, interaction):
+        leaderboard_data = fetch_leaderboard_data()
+        current_first_index = min(max(current_first_index - 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
+        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, current_first_index))
+
+    @discord.ui.button(label="Next Page", style=discord.ButtonStyle.primary, emoji="➡️")
+    async def button_callback(self, button, interaction):
+        leaderboard_data = fetch_leaderboard_data()
+        current_first_index = min(max(current_first_index + 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
+        await self.message.edit(view=Leaderboard(timeout=None), embed=make_leaderboard_embed(leaderboard_data, current_first_index))
+
+# Shows the leaderboard.
+@bot.slash_command(
+        description = "Shows the leaderboard."
+)
+async def leaderboard(ctx : discord.ApplicationContext):
+    ctx.send_response(view=Leaderboard(), embed=make_leaderboard_embed())
+
+
 # Allows users with Manage Channels to change the channel match reports go to.
 @bot.slash_command(
         description = "Manage Channels Only: Change the channel match reports go to."
