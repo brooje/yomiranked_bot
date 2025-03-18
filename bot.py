@@ -217,6 +217,9 @@ async def sync_ranks(steamId, guild : discord.Guild, elo : int):
         return
     elif steam2disc_response.status_code == 200:
         discordId = steam2disc_response.json()
+
+    if (discordId == "none provided"):
+        return
     member = guild.get_member(discordId)
 
 
@@ -299,7 +302,7 @@ async def report_match():
         if (loserDiscordId == "none provided"):
             loserMention = "unlinked"
         else:
-            loserMember = guild.get_member(int(winnerDiscordId))
+            loserMember = guild.get_member(int(loserDiscordId))
             if int(loserDiscordId) == -1:
                 loserMention = "unlinked"
             else:
