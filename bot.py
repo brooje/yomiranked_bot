@@ -132,7 +132,7 @@ def fetch_leaderboard_data():
     elif leaderboard_response.status_code == 200:
         return leaderboard_response.json()
     
-def make_leaderboard_embed(leaderboard_data : list, ctx : discord.ApplicationContext, first_index : int = 0, max_players : int = 10,):
+async def make_leaderboard_embed(leaderboard_data : list, guild_id : int, first_index : int = 0, max_players : int = 10,):
     player_rating_string = ""
     index = first_index
     while (index < first_index + max_players and index < len(leaderboard_data)):
@@ -145,7 +145,7 @@ def make_leaderboard_embed(leaderboard_data : list, ctx : discord.ApplicationCon
         if (entry["discordId"] == "none provided"):
             mention = "unlinked"
         else:
-            member = ctx.author.guild.get_member(int(entry["discordId"]))
+            member = (await bot.fetch_guild(guild_id)).get_member(int(entry["discordId"]))
             if int(entry["discordId"]) == -1:
                 mention = "unlinked"
             else:
@@ -168,20 +168,20 @@ class Leaderboard(discord.ui.View):
     async def button_callback_prev(self, button, interaction : discord.Interaction):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index - 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, interaction.context, self.current_first_index))
+        await self.message.edit(view=self, embed=await make_leaderboard_embed(leaderboard_data, interaction.guild_id, self.current_first_index))
 
     @discord.ui.button(label="Next Page", style=discord.ButtonStyle.primary, emoji="➡️")
     async def button_callback_next(self, button, interaction : discord.Interaction):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index + 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, interaction.context, self.current_first_index))
+        await self.message.edit(view=self, embed=await make_leaderboard_embed(leaderboard_data, interaction.guild_id, self.current_first_index))
 
 # Shows the leaderboard.
 @bot.slash_command(
         description = "Shows the leaderboard."
 )
 async def leaderboard(ctx : discord.ApplicationContext):
-    await ctx.send_response(view=Leaderboard(), embed=make_leaderboard_embed(fetch_leaderboard_data(), ctx))
+    await ctx.send_response(view=Leaderboard(), embed=await make_leaderboard_embed(fetch_leaderboard_data(), ctx.guild_id))
 
 
 # Allows users with Manage Channels to change the channel match reports go to.
