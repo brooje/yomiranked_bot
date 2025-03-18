@@ -132,14 +132,14 @@ def fetch_leaderboard_data():
     elif leaderboard_response.status_code == 200:
         return leaderboard_response.json()
     
-def make_leaderboard_embed(leaderboard_data : list, first_index : int = 0, max_players = 10):
+def make_leaderboard_embed(leaderboard_data : list, first_index : int = 0, max_players : int = 10):
     player_rating_string = ""
     index = first_index
     while (index < first_index + max_players and index < len(leaderboard_data)):
         entry = leaderboard_data[index]
         if (entry["banned"]):
             continue
-        player_rating_string += "**{player}**: {rating}\n".format(player = entry["steamName"], elo = entry["rating"])
+        player_rating_string += "**{player}**: {rating}\n".format(player = entry["steamName"], rating = entry["rating"])
     return discord.Embed(
                           title="Ranked Leaderboard - {first}-{last}".format(first = first_index, last = first_index + max_players),
                           description=player_rating_string)
