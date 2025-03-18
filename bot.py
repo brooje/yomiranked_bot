@@ -129,13 +129,13 @@ async def updaterole(ctx : discord.ApplicationContext):
 )
 @discord.commands.permissions.default_permissions(manage_channels=True)
 async def setreportchannel(ctx : discord.ApplicationContext):
-    channels = [channel for channel in ctx.author.guild.text_channels if channel.id == str(ctx.channel_id())]
+    channels = [channel for channel in ctx.author.guild.text_channels if channel.id == str(ctx.channel_id)]
     if (len(channels) == 0):
         await ctx.send_response("A channel with this ID doesn't exist.", ephemeral = True)
         return
     db_conn = sqlite3.connect("bot.db")
     db_cursor = db_conn.cursor()
-    db_cursor.execute("INSERT INTO guild_data (guild, report_channel) VALUES (?, ?)", (str(ctx.author.guild.id), str(ctx.channel_id())))
+    db_cursor.execute("INSERT INTO guild_data (guild, report_channel) VALUES (?, ?)", (str(ctx.author.guild.id), str(ctx.channel_id)))
     db_conn.commit()
     db_cursor.close()
     db_conn.close()
