@@ -56,16 +56,16 @@ async def on_ready():
 
 # Allows a user to connect their steam account to their discord account, using their decimal SteamId64.
 @bot.slash_command(
-        description="Connect your steam account to your discord account."
+        description="Connect your steam account to your discord account using your key from the ranked mod."
 )
-async def claimsteam(ctx : discord.ApplicationContext, ranked_secret: str):
+async def claimsteam(ctx : discord.ApplicationContext, ingame_key: str):
     hash = ""
     # Get the SteamId hash from the DiscordId; this seems vestigial in its current state, and at this point I'm willing to remove the whole hashing process if possible.
-    hash_response = requests.get(ranked_addr + "/gethash", {"id": str(ranked_secret)})
+    hash_response = requests.get(ranked_addr + "/gethash", {"id": str(ingame_key)})
     if hash_response.status_code == 400:
         if (hash_response.content == "too long"):
-            await ctx.send_response("This SteamId is too long; are you sure you got it right?", ephemeral = True)
-        await ctx.send_response("Your SteamId doesn't seem to have played Ranked yet.", ephemeral = True)
+            await ctx.send_response("This Key is too long; are you sure you got it right?", ephemeral = True)
+        await ctx.send_response("Your SteamId doesn't seem to have played Starlight Ranked yet.", ephemeral = True)
         return
     elif hash_response.status_code == 200:
         hash = hash_response.json()
@@ -74,10 +74,10 @@ async def claimsteam(ctx : discord.ApplicationContext, ranked_secret: str):
     # Registers the Discord account that used the command with their Steam hash.
     register_response = requests.post(ranked_addr + "/registerdiscord", json={"steamHash": hash, "discordId": ctx.author.id})
     if register_response.status_code == 400:
-        await ctx.send_response("Your SteamId doesn't seem to have played Ranked yet.", ephemeral = True)
+        await ctx.send_response("You don't seem to have played Starlight Ranked yet.", ephemeral = True)
         return
     elif register_response.status_code == 200:
-        await ctx.send_response("Your SteamId is now connected to your Discord!", ephemeral = True)
+        await ctx.send_response("Your Ranked Key is now connected to your Discord!", ephemeral = True)
 
 
 # Allows a user to manually update their discord rank in a guild based on their ELO.
@@ -91,7 +91,7 @@ async def updaterole(ctx : discord.ApplicationContext):
     # Get the SteamId from the DiscordId.
     disc2steam_response = requests.get(ranked_addr + "/disc2steam", {"discordId": str(discordId)})
     if disc2steam_response.status_code == 400:
-        await ctx.send_response("Your Discord account is not connected to any Steam account. Use /registersteam [steamId].", ephemeral = True)
+        await ctx.send_response("Your Discord account is not connected to any Steam account. Use /claimsteam [ingame key].", ephemeral = True)
         return
     elif disc2steam_response.status_code == 200:
         steamId = disc2steam_response.json()
@@ -100,7 +100,7 @@ async def updaterole(ctx : discord.ApplicationContext):
     # Get the player's elo from their SteamId.
     elo_response = requests.get(ranked_addr + "/getrank", {"player": str(steamId)})
     if elo_response.status_code == 400:
-        await ctx.send_response("Your Discord account is not connected to any Steam account. Use /registersteam [steamId].", ephemeral = True)
+        await ctx.send_response("Your Discord account is not connected to any Steam account. Use /claimsteam [ingame key]", ephemeral = True)
         return
     elif elo_response.status_code == 200:
         elo = elo_response.json()
@@ -129,10 +129,9 @@ async def updaterole(ctx : discord.ApplicationContext):
 )
 @discord.commands.permissions.default_permissions(manage_channels=True)
 async def setreportchannel(ctx : discord.ApplicationContext):
-
     channels = [channel for channel in ctx.author.guild.text_channels if channel.id == str(ctx.channel_id())]
     if (len(channels) == 0):
-        await ctx.send_response("A channel with this Id doesn't exist.", ephemeral = True)
+        await ctx.send_response("A channel with this ID doesn't exist.", ephemeral = True)
         return
     db_conn = sqlite3.connect("bot.db")
     db_cursor = db_conn.cursor()
@@ -143,8 +142,9 @@ async def setreportchannel(ctx : discord.ApplicationContext):
     await ctx.send_response("Changed reporting channel to {}".format(channels[0]))
 
 @setreportchannel.error
-async def setreportchannel_error(ctx : discord.ApplicationContext, channelid : str):
-    await ctx.send_response("You don't have the Manage Channels permission.", ephemeral = True)
+async def setreportchannel_error(ctx : discord.ApplicationContext, error : discord.ApplicationCommandError):
+    print(str(error))
+    await ctx.send_response("Error running command. Do you have the Manage Channels permission?", ephemeral = True)
 
 # Quietly updates a Discord user's role in a guild given their Steam Id, using the Discord Id attached to the Steam Id in the database.
 async def sync_ranks(steamId, guild : discord.Guild, elo : int):
@@ -204,7 +204,6 @@ async def report_match():
     steam2disc_response = requests.get(ranked_addr + "/steam2disc", {"steamId": str(loserSteamId)})
     if steam2disc_response.status_code == 200:
         loserDiscordId = steam2disc_response.json()
-
     else:
         print("Error fetching loser from DB")
         print(steam2disc_response.status_code)
@@ -256,7 +255,7 @@ async def report_match():
     return "<p>Reported match.</p>", 200
 
 
-
+# We gotta do this so both the bot and the endpoints run.
 quart_task = bot.loop.create_task(app.run_task(port=8081))
 
 bot.run(os.getenv("TOKEN"))
