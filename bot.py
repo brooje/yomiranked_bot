@@ -137,6 +137,7 @@ def make_leaderboard_embed(leaderboard_data : list, first_index : int = 0, max_p
     index = first_index
     while (index < first_index + max_players and index < len(leaderboard_data)):
         entry = leaderboard_data[index]
+        index += 1
         if (entry["banned"]):
             continue
         player_rating_string += "**{player}**: {rating}\n".format(player = entry["steamName"], rating = entry["rating"])
