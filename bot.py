@@ -135,7 +135,7 @@ async def setreportchannel(ctx : discord.ApplicationContext):
         return
     db_conn = sqlite3.connect("bot.db")
     db_cursor = db_conn.cursor()
-    db_cursor.execute("INSERT OR REPLACE INTO guild_data (guild, report_channel) VALUES (?, ?) IFNULL", (str(ctx.author.guild.id), str(ctx.channel_id)))
+    db_cursor.execute("INSERT OR REPLACE INTO guild_data (guild, report_channel) VALUES (?, ?)", (str(ctx.author.guild.id), str(ctx.channel_id)))
     db_conn.commit()
     db_cursor.close()
     db_conn.close()
