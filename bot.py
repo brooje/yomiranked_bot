@@ -145,7 +145,7 @@ def make_leaderboard_embed(leaderboard_data : list, ctx : discord.ApplicationCon
         if (entry["discordId"] == "none provided"):
             mention = "unlinked"
         else:
-            member = ctx.interaction.guild.get_member(int(entry["discordId"]))
+            member = ctx.author.guild.get_member(int(entry["discordId"]))
             if int(entry["discordId"]) == -1:
                 mention = "unlinked"
             else:
