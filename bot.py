@@ -67,7 +67,7 @@ async def claimsteam(ctx : discord.ApplicationContext, ingame_key: str):
     if hash_response.status_code == 400:
         if (hash_response.content == "too long"):
             await ctx.send_response("This Key is too long; are you sure you got it right?", ephemeral = True)
-        await ctx.send_response("Your SteamId doesn't seem to have played Starlight Ranked yet.", ephemeral = True)
+        await ctx.send_response("Your SteamId doesn't seem to have played Starlight Ranked yet. Go join a Ranked lobby and try again.", ephemeral = True)
         return
     elif hash_response.status_code == 200:
         hash = hash_response.json()
@@ -76,7 +76,7 @@ async def claimsteam(ctx : discord.ApplicationContext, ingame_key: str):
     # Registers the Discord account that used the command with their Steam hash.
     register_response = requests.post(ranked_addr + "/registerdiscord", json={"steamHash": hash, "discordId": ctx.author.id})
     if register_response.status_code == 400:
-        await ctx.send_response("You don't seem to have played Starlight Ranked yet.", ephemeral = True)
+        await ctx.send_response("You don't seem to have played Starlight Ranked yet. Go join a Ranked lobby and try again.", ephemeral = True)
         return
     elif register_response.status_code == 200:
         await ctx.send_response("Your Ranked Key is now connected to your Discord!", ephemeral = True)
