@@ -181,7 +181,7 @@ class Leaderboard(discord.ui.View):
         description = "Shows the leaderboard."
 )
 async def leaderboard(ctx : discord.ApplicationContext):
-    await ctx.send_response(view=Leaderboard(), embed=await make_leaderboard_embed(fetch_leaderboard_data(), ctx.guild_id))
+    await ctx.send_response(view=Leaderboard(), embed=await make_leaderboard_embed(fetch_leaderboard_data(), ctx.author.guild.id))
 
 
 # Allows users with Manage Channels to change the channel match reports go to.
