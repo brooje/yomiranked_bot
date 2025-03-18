@@ -129,7 +129,7 @@ async def updaterole(ctx : discord.ApplicationContext):
 )
 @discord.commands.permissions.default_permissions(manage_channels=True)
 async def setreportchannel(ctx : discord.ApplicationContext):
-    channels = [channel for channel in ctx.author.guild.text_channels if channel.id == str(ctx.channel_id)]
+    channels = [channel for channel in ctx.author.guild.text_channels if str(channel.id) == str(ctx.channel_id)]
     if (len(channels) == 0):
         await ctx.send_response("A channel with this ID doesn't exist.", ephemeral = True)
         return
