@@ -143,6 +143,7 @@ async def setreportchannel(ctx : discord.ApplicationContext):
 
 @setreportchannel.error
 async def setreportchannel_error(ctx : discord.ApplicationContext, error : discord.ApplicationCommandError):
+    print(error)
     await ctx.send_response("Error running command. Do you have the Manage Channels permission?", ephemeral = True)
 
 # Quietly updates a Discord user's role in a guild given their Steam Id, using the Discord Id attached to the Steam Id in the database.
