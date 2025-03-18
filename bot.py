@@ -165,23 +165,23 @@ class Leaderboard(discord.ui.View):
 
 
     @discord.ui.button(label="Previous Page", style=discord.ButtonStyle.primary, emoji="⬅️")
-    async def button_callback_prev(self, button, interaction):
+    async def button_callback_prev(self, button, interaction : discord.Interaction):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index - 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
+        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, interaction.context, self.current_first_index))
 
     @discord.ui.button(label="Next Page", style=discord.ButtonStyle.primary, emoji="➡️")
-    async def button_callback_next(self, button, interaction):
+    async def button_callback_next(self, button, interaction : discord.Interaction):
         leaderboard_data = fetch_leaderboard_data()
         self.current_first_index = min(max(self.current_first_index + 10, 0), len(leaderboard_data) - (len(leaderboard_data) % 10))
-        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, self.current_first_index))
+        await self.message.edit(view=self, embed=make_leaderboard_embed(leaderboard_data, interaction.context, self.current_first_index))
 
 # Shows the leaderboard.
 @bot.slash_command(
         description = "Shows the leaderboard."
 )
 async def leaderboard(ctx : discord.ApplicationContext):
-    await ctx.send_response(view=Leaderboard(), embed=make_leaderboard_embed(fetch_leaderboard_data()))
+    await ctx.send_response(view=Leaderboard(), embed=make_leaderboard_embed(fetch_leaderboard_data(), ctx))
 
 
 # Allows users with Manage Channels to change the channel match reports go to.
