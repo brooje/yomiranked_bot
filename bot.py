@@ -110,6 +110,7 @@ async def updaterole(ctx : discord.ApplicationContext):
     else:
         await ctx.send_response("Unknown error.")
     
+    
     for rank in ranks:
         # Remove all previous rank roles from the user.
         roles = [role for role in roles if role.name.lower() != rank["name"].lower()] 
@@ -126,7 +127,7 @@ async def updaterole(ctx : discord.ApplicationContext):
     await ctx.author.edit(roles=roles)
 
 def fetch_leaderboard_data():
-    leaderboard_response = requests.get(ranked_addr + "/leaderboard")
+    leaderboard_response = requests.get(ranked_addr + "/leaderboard", {"start": 0, "end": 99})
     if leaderboard_response.status_code == 400:
         return []
     elif leaderboard_response.status_code == 200:
@@ -220,7 +221,7 @@ async def sync_ranks(steamId, guild : discord.Guild, elo : int):
 
     if (discordId == "none provided"):
         return
-    member = guild.get_member(discordId)
+    member = guild.get_member(int(discordId))
 
 
     if (member != None):
@@ -232,7 +233,7 @@ async def sync_ranks(steamId, guild : discord.Guild, elo : int):
             if (elo > (rank["minElo"] or 0)) and (elo <= (rank["maxElo"] or 9999999)):
                 # Find and add the user's current rank role.
                 matching_roles = [role for role in guild.roles if role.name.lower() == rank["name"].lower()]
-                if (len(matching_roles) == 0):   
+                if (len(matching_roles) == 0):
                     return
                 roles.append(matching_roles[0])
 
